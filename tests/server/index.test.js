@@ -1,18 +1,13 @@
 /* eslint-disable global-require */
 /** @jest-environment node */
 
-const shallowMockedModules = [
-  'morgan',
-];
-
-shallowMockedModules.forEach((module) => {
-  jest.mock(module, () => (() => ({})));
-});
+['morgan', 'path'].forEach((module) => jest.mock(module));
 
 jest.mock('express', () => {
   const express = () => ({
-    use: () => {},
+    get: () => {},
     listen: () => {},
+    use: () => {},
   });
   express.static = () => {};
   return express;
