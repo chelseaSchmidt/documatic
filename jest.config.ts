@@ -105,6 +105,7 @@ const config: Config = {
     'client/',
     'client/src',
     'client/src/components',
+    'client/src/hooks',
     'node_modules',
   ],
 

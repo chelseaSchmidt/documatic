@@ -45,6 +45,7 @@
     "paths": {
       "src/*": ["./client/src/*"],
       "components/*": ["./client/src/components/*"],
+      "hooks/*": ["./client/src/hooks/*"],
       "styles/*": ["./client/src/styles/*"],
       "modules/*": ["./modules/*"]
     },
