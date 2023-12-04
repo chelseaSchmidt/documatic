@@ -43,8 +43,14 @@ module.exports = {
     },
   },
   rules: {
-    'no-console': 'off',
+    indent: 'error',
+    quotes: ['error', 'single'],
+    semi: 'error',
     'arrow-body-style': 'off',
+    'comma-dangle': 'error',
+    'no-console': 'off',
+    'no-unused-vars': 'error',
+    'object-curly-spacing': 'error',
     'sort-imports': [
       'error',
       {
@@ -57,8 +63,20 @@ module.exports = {
     ],
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     'import/no-unresolved': 'error',
+    'jsx-a11y/label-has-associated-control': [
+      'error',
+      {
+        depth: 3,
+        assert: 'either',
+      },
+    ],
     'react/function-component-definition': 'off',
+    'react/require-default-props': 'off',
     '@typescript-eslint/indent': ['error', 2],
+    '@typescript-eslint/no-misused-promises': [
+      'error',
+      { checksVoidReturn: { attributes: false } },
+    ],
     '@typescript-eslint/quotes': ['error', 'single'],
   },
 };

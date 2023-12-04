@@ -100,6 +100,8 @@ const config: Config = {
    */
 
   moduleDirectories: [
+    '<rootDir>',
+    'client/',
     'client/src',
     'client/src/components',
     'node_modules',
@@ -150,7 +152,7 @@ const config: Config = {
   // reporters: undefined,
 
   /* Automatically reset mock state before every test */
-  resetMocks: true,
+  // resetMocks: true,
 
   /* Reset the module registry before running each individual test */
   // resetModules: false,
@@ -231,7 +233,14 @@ const config: Config = {
   // testRunner: "jest-circus/runner",
 
   /* A map from regular expressions to paths to transformers */
-  // transform: undefined,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        isolatedModules: true,
+      },
+    ],
+  },
 
   /*
    * An array of regexp pattern strings that are matched against all source file paths, matched
