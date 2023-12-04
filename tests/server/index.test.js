@@ -3,6 +3,10 @@
 
 ['morgan', 'path'].forEach((module) => jest.mock(module));
 
+jest.mock('fs', () => ({
+  readFileSync: () => '{ "web": { "client_id": "", "client_secret": "" } }',
+}));
+
 jest.mock('express', () => {
   const express = () => ({
     get: () => {},

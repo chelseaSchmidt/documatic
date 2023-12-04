@@ -5,3 +5,4 @@ bundle.js.*
 dist
 coverage/
 todo.txt
+credentials.json

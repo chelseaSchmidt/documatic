@@ -3,6 +3,7 @@
     "client/**/*",
     "server/**/*",
     "tests/**/*",
+    "modules/**/*",
     "__mocks__/**/*",
     ".eslintrc.cjs",
     "*.js",
@@ -44,7 +45,8 @@
     "paths": {
       "src/*": ["./client/src/*"],
       "components/*": ["./client/src/components/*"],
-      "styles/*": ["./client/src/styles/*"]
+      "styles/*": ["./client/src/styles/*"],
+      "modules/*": ["./modules/*"]
     },
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
