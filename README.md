@@ -1,10 +1,5 @@
-## Tech stack
-| | |
-|-|-|
-| Frontend | TypeScript, React, Webpack |
-| Backend | Node, Express |
-| Testing | Jest, React Testing Library |
-| Linting | ESLint |
+# documatic
+Generate documents from Google Docs templates
 
 ## System requirements
 - Node
