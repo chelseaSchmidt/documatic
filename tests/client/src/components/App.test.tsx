@@ -60,7 +60,7 @@ describe('App', () => {
 
     await waitForLoadingSpinner();
 
-    expect(screen.getByRole('button', { name: Label.FileQueryButton })).toBeDisabled();
+    expect(screen.getByRole('button', { name: Label.FileSearchButton })).toBeDisabled();
   });
 
   it('should disallow file query after authentication has expired', async () => {

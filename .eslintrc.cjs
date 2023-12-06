@@ -30,8 +30,7 @@ module.exports = {
   processor: 'disable/disable',
   root: true,
   ignorePatterns: [
-    'bundle.js',
-    'bundle.js.*',
+    'client/public',
     'node_modules',
     'dist',
     'tests/coverage',

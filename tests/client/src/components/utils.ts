@@ -26,9 +26,9 @@ export const waitForLoadingSpinner = async () => {
 
 export const typeFileSearch = async () => {
   const SAMPLE_QUERY = 'sample query';
-  await userEvent.type(screen.getByLabelText(Label.FileQueryInput), SAMPLE_QUERY);
+  await userEvent.type(screen.getByLabelText(Label.FileSearchInput), SAMPLE_QUERY);
 };
 
 export const submitFileSearch = async () => {
-  await userEvent.click(screen.getByRole('button', { name: Label.FileQueryButton }));
+  await userEvent.click(screen.getByRole('button', { name: Label.FileSearchButton }));
 };

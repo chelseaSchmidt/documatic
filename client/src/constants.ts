@@ -1,8 +1,8 @@
 export enum Label {
   App = 'App',
   AuthLink = 'Sign in',
-  FileQueryButton = 'Get file',
-  FileQueryInput = 'Template file input',
+  FileSearchButton = 'Get file',
+  FileSearchInput = 'Template file input',
 }
 
 export enum SuccessMessage {

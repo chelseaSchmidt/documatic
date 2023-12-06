@@ -89,7 +89,7 @@ const App = () => {
             return (
               <Form>
                 <FormField
-                  label={Label.FileQueryInput}
+                  label={Label.FileSearchInput}
                   name="templateFileName"
                   type="text"
                   isLabelVisible={false}
@@ -98,7 +98,7 @@ const App = () => {
                   type="submit"
                   disabled={isSubmitting || !isAuthenticated}
                 >
-                  {Label.FileQueryButton}
+                  {Label.FileSearchButton}
                 </button>
               </Form>
             );

@@ -10,7 +10,8 @@
     "*.ts"
   ],
   "exclude": [
-    "tests/coverage/**/*"
+    "tests/coverage/**/*",
+    "client/public/**/*"
   ],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
