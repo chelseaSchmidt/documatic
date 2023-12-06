@@ -1,18 +1,19 @@
+import { AsyncMethod, Decorator } from 'src/types';
 import { useState } from 'react';
 
 const useLoadingState = (initial = false): [
   boolean,
   React.Dispatch<React.SetStateAction<boolean>>,
-  (callback: () => Promise<unknown>) => () => Promise<unknown>,
+  Decorator,
 ] => {
   const [loading, setLoading] = useState(initial);
 
-  const withLoadingState = (callback: () => Promise<unknown>) => {
-    return async () => {
+  const withLoadingState = <I, R>(originalMethod: AsyncMethod<I, R>) => {
+    return async (...args: I[]) => {
       setLoading(true);
-      let result;
+      let result = null;
       try {
-        result = await callback();
+        result = await originalMethod(...args);
       } catch (error) {
         setLoading(false);
         throw error;

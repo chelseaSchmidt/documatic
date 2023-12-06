@@ -1,3 +1,4 @@
+import { AsyncMethod, Decorator } from 'src/types';
 import { AxiosError } from 'axios';
 import { ErrorMessage } from 'src/constants';
 import { useState } from 'react';
@@ -5,15 +6,15 @@ import { useState } from 'react';
 const useErrorState = (initial = ''): [
   string,
   React.Dispatch<React.SetStateAction<string>>,
-  (callback: () => Promise<unknown>) => () => Promise<unknown>,
+  Decorator,
 ] => {
   const [errorMessage, setErrorMessage] = useState(initial);
 
-  const guard = (callback: () => Promise<unknown>) => {
-    return async () => {
-      let result;
+  const guard = <I, R>(originalMethod: AsyncMethod<I, R>) => {
+    return async (...args: I[]) => {
+      let result = null;
       try {
-        result = await callback();
+        result = await originalMethod(...args);
       } catch (error) {
         setErrorMessage(
           (typeof error === 'string' ? error : null)
