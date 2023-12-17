@@ -1,35 +1,31 @@
 /* eslint-disable prefer-arrow-callback */
 import 'styles/main.css';
 import { ErrorMessage, Label, SuccessMessage } from 'src/constants';
+import {
+  File,
+  FileResponse,
+  Nullable,
+  StringDictionary,
+} from 'src/types';
 import { Form, Formik } from 'formik';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { drive_v3 } from 'googleapis';
+import FileCreationForm from 'src/components/FileCreationForm';
 import FormField from 'components/FormField';
 import LoadingSpinner from 'components/LoadingSpinner';
 import routes from 'modules/routes';
 import useErrorState from 'hooks/useErrorState';
 import useLoadingState from 'hooks/useLoadingState';
 
-type File = drive_v3.Params$Resource$Files$Get | null;
-
-interface FileResponse {
-  data: File;
-}
-
 interface AuthStatusResponse {
   data: boolean;
-}
-
-interface FormErrors {
-  templateFileName?: string;
 }
 
 const App = () => {
   const [loading, , withLoadingState] = useLoadingState();
   const [errorMessage, setErrorMessage, guard] = useErrorState();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [templateFile, setTemplateFile] = useState<File>(null);
+  const [templateFile, setTemplateFile] = useState<Nullable<File>>(null);
 
   const getAuthStatus = guard<void, boolean>(
     async (): Promise<boolean> => {
@@ -73,7 +69,7 @@ const App = () => {
       <Formik
         initialValues={{ templateFileName: '' }}
         validate={(values) => {
-          const errors: FormErrors = {};
+          const errors: StringDictionary = {};
           if (!values.templateFileName) {
             errors.templateFileName = ErrorMessage.EmptyFileInput;
           }
@@ -119,13 +115,23 @@ const App = () => {
       </a>
 
       {
-        templateFile && <div>{JSON.stringify(templateFile)}</div>
+        templateFile && <div style={{ margin: '20px 0' }}>{JSON.stringify(templateFile)}</div>
       }
       {
         errorMessage && <div>{errorMessage}</div>
       }
       {
         loading ? <LoadingSpinner /> : null
+      }
+      {
+        templateFile && (
+          <FileCreationForm
+            templateFile={templateFile}
+            getAuthStatus={getAuthStatus}
+            isAuthenticated={isAuthenticated}
+            setIsAuthenticated={setIsAuthenticated}
+          />
+        )
       }
     </>
   );

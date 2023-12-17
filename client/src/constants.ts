@@ -3,6 +3,9 @@ export enum Label {
   AuthLink = 'Sign in',
   FileSearchButton = 'Get file',
   FileSearchInput = 'Template file input',
+  FileCreationButton = 'Create document',
+  FileName = 'File name',
+  FolderName = 'Save to folder',
 }
 
 export enum SuccessMessage {
@@ -12,5 +15,6 @@ export enum SuccessMessage {
 export enum ErrorMessage {
   AuthExpired = 'Authentication expired, please sign in again',
   EmptyFileInput = 'Please enter a file name',
+  EmptyFolderInput = 'Please enter a folder name',
   Default = 'Something went wrong',
 }

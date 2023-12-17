@@ -30,7 +30,7 @@ describe('App', () => {
   });
 
   it('should display error if problem retrieving authentication status', async () => {
-    queueNetworkError(new Error(SAMPLE_ERROR), routes.AUTH_STATUS);
+    queueNetworkError(new Error(SAMPLE_ERROR), 'get', routes.AUTH_STATUS);
     render(<App />);
 
     await waitForLoadingSpinner();
@@ -84,6 +84,16 @@ describe('App', () => {
     expect(screen.getByText(ErrorMessage.EmptyFileInput)).toBeInTheDocument();
   });
 
+  it('should display file creation form after template file found', async () => {
+    render(<App />);
+
+    await waitForLoadingSpinner();
+    await typeFileSearch();
+    await submitFileSearch();
+
+    expect(screen.getByRole('button', { name: Label.FileCreationButton })).toBeInTheDocument();
+  });
+
   it('should display error message if unexpected network error occurs', async () => {
     queueNetworkError(new AxiosError(SAMPLE_ERROR));
     render(<App />);
@@ -112,7 +122,7 @@ describe('App', () => {
   });
 
   it('should not crash if error handling hook fails', async () => {
-    queueNetworkError(new Error(SAMPLE_ERROR), routes.AUTH_STATUS);
+    queueNetworkError(new Error(SAMPLE_ERROR), 'get', routes.AUTH_STATUS);
     jest.spyOn(useErrorState, 'default').mockImplementation(() => ([
       '',
       () => {},
