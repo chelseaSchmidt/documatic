@@ -48,6 +48,7 @@ module.exports = {
     'arrow-body-style': 'off',
     'comma-dangle': 'error',
     'no-console': 'off',
+    'no-redeclare': 'error',
     'no-unused-vars': 'error',
     'object-curly-spacing': 'error',
     'sort-imports': [
