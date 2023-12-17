@@ -11,9 +11,11 @@ jest.mock('express', () => {
   const express = () => ({
     get: () => {},
     listen: () => {},
+    post: () => {},
     use: () => {},
   });
   express.static = () => {};
+  express.json = () => {};
   return express;
 });
 

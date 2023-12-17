@@ -22,9 +22,13 @@ const oauth2Client = new google.auth.OAuth2(
 google.options({ auth: oauth2Client });
 
 module.exports = {
+  drive: google.drive('v3'),
+  docs: google.docs('v1'),
   AUTH_URL: oauth2Client.generateAuthUrl({
     scope: [
+      // read/write permission to files explicitly shared with, or created by, this app
       'https://www.googleapis.com/auth/drive.file',
+      // read permission to all files
       'https://www.googleapis.com/auth/drive.readonly',
     ],
   }),
@@ -35,5 +39,4 @@ module.exports = {
   isAuthenticated: () => (
     Boolean((oauth2Client.credentials?.expiry_date || 0) > Date.now())
   ),
-  drive: google.drive('v3'),
 };

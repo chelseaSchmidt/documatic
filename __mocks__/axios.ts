@@ -9,7 +9,7 @@ export class AxiosError extends Error {
   }
 }
 
-export const MOCK_FILE = { id: '123' };
+export const MOCK_FILE = { metadata: { id: '123' }, placeholders: [] };
 
 export default {
   get: (route: string) => {
@@ -28,4 +28,5 @@ export default {
 
     return Promise.resolve({ data });
   },
+  post: () => Promise.resolve({ data: MOCK_FILE }),
 };
