@@ -24,6 +24,8 @@ google.options({ auth: oauth2Client });
 module.exports = {
   drive: google.drive('v3'),
   docs: google.docs('v1'),
+  DOC_MIME_TYPE: 'application/vnd.google-apps.document',
+  FOLDER_MIME_TYPE: 'application/vnd.google-apps.folder',
   AUTH_URL: oauth2Client.generateAuthUrl({
     scope: [
       // read/write permission to files explicitly shared with, or created by, this app

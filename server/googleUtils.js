@@ -1,6 +1,10 @@
 /* eslint-plugin-disable @typescript-eslint */
 const { FILE_TYPES } = require('./constants');
 const { drive, docs } = require('./google');
+const {
+  isFileNameValid,
+  INVALID_FILE_NAME_MESSAGE,
+} = require('../modules/utils');
 
 class ResponseData {
   data = null;
@@ -49,7 +53,7 @@ module.exports = {
     try {
       result.setData((await docs.documents.get({ documentId })).data);
     } catch {
-      result.setError({ code: 502, message: 'Failed to get document by internal ID' });
+      result.setError({ code: 500, message: 'Failed to get document by internal ID' });
     }
 
     return result;
@@ -62,11 +66,11 @@ module.exports = {
       result.setData(
         (await drive.files.get({
           fileId,
-          fields: 'id, name, webViewLink', // https://developers.google.com/drive/api/reference/rest/v3/files#File
+          fields: 'id, name, mimeType, webViewLink', // https://developers.google.com/drive/api/reference/rest/v3/files#File
         })).data,
       );
     } catch {
-      result.setError({ code: 502, message: 'Failed to get file by internal ID' });
+      result.setError({ code: 500, message: 'Failed to get file by internal ID' });
     }
 
     return result;
@@ -77,6 +81,11 @@ module.exports = {
 
     if (!fileName) {
       result.setError({ code: 400, message: `Missing ${fileType} name in URL` });
+      return result;
+    }
+
+    if (typeof fileName !== 'string') {
+      result.setError({ code: 400, message: `Invalid ${fileType} name` });
       return result;
     }
 
@@ -96,7 +105,7 @@ module.exports = {
 
       matchingFiles.push(...files);
     } catch (error) {
-      result.setError({ code: 400, message: `Invalid ${fileType} name` });
+      result.setError({ code: 500, message: 'Encountered unexpected error when searching for the file' });
       return result;
     }
 
@@ -116,6 +125,11 @@ module.exports = {
   copyFile: async (fileId, newFileName, destinationFolderId) => {
     const result = new ResponseData();
 
+    if (!isFileNameValid(newFileName)) {
+      result.setError({ code: 400, message: INVALID_FILE_NAME_MESSAGE });
+      return result;
+    }
+
     try {
       result.setData(
         (await drive.files.copy({
@@ -127,7 +141,7 @@ module.exports = {
         }))?.data,
       );
     } catch {
-      result.setError({ code: 400, message: 'Unable to copy the designated template' });
+      result.setError({ code: 500, message: 'Unable to copy the designated template' });
     }
 
     return result;
@@ -146,7 +160,7 @@ module.exports = {
         }))?.data,
       );
     } catch {
-      result.setError({ code: 400, message: 'Unable to update document contents' });
+      result.setError({ code: 500, message: 'Unable to update document contents' });
     }
 
     return result;

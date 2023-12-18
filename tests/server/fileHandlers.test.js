@@ -2,6 +2,12 @@
 /* eslint-disable global-require */
 /** @jest-environment node */
 
+const DOC_MIME_TYPE = 'doc-mime-type';
+const DOC_FILE_ID = 'doc-file-id';
+const DOC_FILE_NAME = 'doc-file-name';
+const FOLDER_MIME_TYPE = 'folder-mime-type';
+const FOLDER_ID = 'folder-id';
+const FOLDER_NAME = 'folder-name';
 const SAMPLE_TEXT = 'abc';
 const SAMPLE_PLACEHOLDER = '{abc}';
 const PARAGRAPH_WITH_CONTENT = {
@@ -14,6 +20,7 @@ const PARAGRAPH_WITH_CONTENT = {
   },
 };
 const DETECTED_PLACEHOLDERS = [SAMPLE_PLACEHOLDER]; // expected placeholder end result
+const EMPTY_DOC = { body: { content: [] } };
 const DOC = {
   body: {
     content: [
@@ -36,11 +43,11 @@ const DOC = {
     ],
   },
 };
-const EMPTY_DOC = { body: { content: [] } }; // TODO: test line 37 of fileHandlers with this
-const FILE_METADATA = {};
+const FILE_METADATA = { id: DOC_FILE_ID, mimeType: DOC_MIME_TYPE };
 const FILE = { metadata: FILE_METADATA, placeholders: DETECTED_PLACEHOLDERS };
 const FILE_NO_PLACEHOLDERS = { metadata: FILE_METADATA, placeholders: [] };
-const REQ = { params: { name: SAMPLE_TEXT } };
+const FOLDER_METADATA = { id: FOLDER_ID, mimeType: FOLDER_MIME_TYPE };
+const REQ = { params: { name: DOC_FILE_NAME } };
 
 const throwError = jest.fn(() => { throw new Error(); });
 const send = jest.fn();
@@ -54,10 +61,10 @@ const constructPostRequest = ({
 } = {}) => {
   return {
     body: {
-      templateId: hasTemplateId ? SAMPLE_TEXT : undefined,
+      templateId: hasTemplateId ? DOC_FILE_ID : undefined,
       metadataUpdates: {
-        fileName: hasFileName ? SAMPLE_TEXT : undefined,
-        folderName: hasFolderName ? SAMPLE_TEXT : undefined,
+        fileName: hasFileName ? DOC_FILE_NAME : undefined,
+        folderName: hasFolderName ? FOLDER_NAME : undefined,
       },
       contentUpdates: hasContentUpdates
         ? { [SAMPLE_PLACEHOLDER]: SAMPLE_TEXT }
@@ -77,8 +84,14 @@ jest.mock('../../server/google', () => {
     isAuthenticated: jest.fn(() => true),
     drive: {
       files: {
-        list: jest.fn(() => ({ data: { files: [{}] } })),
-        get: jest.fn(() => ({ data: FILE_METADATA })),
+        list: jest.fn(({ q }) => {
+          if (q.includes(FOLDER_NAME)) return { data: { files: [FOLDER_METADATA] } };
+          return { data: { files: [FILE_METADATA] } };
+        }),
+        get: jest.fn(({ fileId }) => {
+          if (fileId === FOLDER_ID) return { data: FOLDER_METADATA };
+          return { data: FILE_METADATA };
+        }),
         copy: jest.fn(() => ({ data: FILE_METADATA })),
       },
     },
@@ -88,6 +101,8 @@ jest.mock('../../server/google', () => {
         batchUpdate: jest.fn(() => ({ data: DOC })),
       },
     },
+    DOC_MIME_TYPE,
+    FOLDER_MIME_TYPE,
   };
 });
 
@@ -127,10 +142,17 @@ describe('GET file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if the first external client query throws an error', async () => {
+  it('should fail with status code 400 if file name is not valid', async () => {
+    const badReq = cloneDeep(REQ);
+    badReq.params.name = 123;
+    await handleGetFileByName(badReq, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 500 if file list search throws an error', async () => {
     drive.files.list.mockImplementationOnce(throwError);
     await handleGetFileByName(REQ, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 
   it('should fail with status code 404 if no file is found', async () => {
@@ -145,22 +167,28 @@ describe('GET file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  it('should fail with status code 400 if searched file is not a google doc', async () => {
+    drive.files.get.mockImplementationOnce(() => ({ data: FOLDER_METADATA }));
+    await handleGetFileByName(REQ, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   it('should fail with status code 502 if the response from Google has an unexpected structure', async () => {
     drive.files.list.mockImplementationOnce(() => ({ data: {} }));
     await handleGetFileByName(REQ, res);
     expect(res.status).toHaveBeenCalledWith(502);
   });
 
-  it('should fail with status code 502 if there is an unexpected google.drive error not caused by bad inputs', async () => {
+  it('should fail with status code 500 if file can\'t be retrieved by its internal ID', async () => {
     drive.files.get.mockImplementationOnce(throwError);
     await handleGetFileByName(REQ, res);
-    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 
-  it('should fail with status code 502 if there is an unexpected google.docs error not caused by bad inputs', async () => {
+  it('should fail with status code 500 if document can\'t be retrieved by its internal ID', async () => {
     docs.documents.get.mockImplementationOnce(throwError);
     await handleGetFileByName(REQ, res);
-    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
@@ -193,29 +221,80 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if the template file can\'t be copied due to invalid inputs', async () => {
-    drive.files.copy.mockImplementationOnce(throwError);
+  it('should fail with status code 400 if requested content updates aren\'t strings', async () => {
+    const req = constructPostRequest();
+    req.body.contentUpdates = { number: 123 };
+    await handleCreateFile(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 400 if requested content updates are malformed', async () => {
+    const req = constructPostRequest();
+    req.body.contentUpdates = [];
+    await handleCreateFile(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 400 if requested template is not a google doc', async () => {
+    drive.files.get.mockImplementationOnce(() => ({ data: FOLDER_METADATA }));
     await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 400 if specified save destination is not a folder', async () => {
+    drive.files.get
+      .mockImplementationOnce(() => ({ data: FILE_METADATA }))
+      .mockImplementationOnce(() => ({ data: FILE_METADATA }));
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 400 if requested new file name is not a valid string', async () => {
+    const req = constructPostRequest();
+    req.body.metadataUpdates.fileName = '*';
+    await handleCreateFile(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 400 if requested new file name is not a string', async () => {
+    const req = constructPostRequest();
+    req.body.metadataUpdates.fileName = 123;
+    await handleCreateFile(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should fail with status code 500 if unexpected error retrieving template by its internal ID', async () => {
+    drive.files.get.mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  it('should fail with status code 500 if unexpected error retrieving destination folder', async () => {
+    drive.files.get
+      .mockImplementationOnce(() => ({ data: FILE_METADATA }))
+      .mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  it('should fail with status code 500 if file can\'t be retrieved after creation', async () => {
+    drive.files.get
+      .mockImplementationOnce(() => ({ data: FILE_METADATA }))
+      .mockImplementationOnce(() => ({ data: FOLDER_METADATA }))
+      .mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  it('should fail with status code 500 if the template file can\'t be copied after validating inputs', async () => {
+    drive.files.copy.mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 
   it('should partially fail with status code 207 if file created but content not updated', async () => {
     docs.documents.batchUpdate.mockImplementationOnce(throwError);
     await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(207);
-  });
-
-  it('should fail with status code 400 if specified destination folder invalid', async () => {
-    drive.files.list.mockImplementationOnce(throwError);
-    await handleCreateFile(constructPostRequest(), res);
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  it('should fail with status code 502 if file can\'t be retrieved after creation', async () => {
-    drive.files.get
-      .mockImplementationOnce(jest.fn(() => ({ data: FILE_METADATA })))
-      .mockImplementationOnce(throwError);
-    await handleCreateFile(constructPostRequest(), res);
-    expect(res.status).toHaveBeenCalledWith(502);
   });
 });

@@ -1,10 +1,25 @@
 /* eslint-plugin-disable @typescript-eslint */
 const { isAuthenticated } = require('./google');
 
+const isString = (value) => typeof value === 'string';
+const areAllKeysStrings = (object) => !Object.keys(object).map(isString).includes(false);
+const areAllValuesStrings = (object) => !Object.values(object).map(isString).includes(false);
+
 module.exports = {
   deDupe: (array) => Array.from(new Set(array)),
 
   respondWithErrorData: (res, data) => res.status(data.errorCode).send(data.errorMessage),
+
+  areContentUpdatesValid: (contentUpdates) => {
+    if (typeof contentUpdates === 'object') {
+      if (!Array.isArray(contentUpdates)) {
+        if (areAllKeysStrings(contentUpdates)) {
+          return areAllValuesStrings(contentUpdates);
+        }
+      }
+    }
+    return false;
+  },
 
   injectAuthValidation: (handlers) => {
     Object.entries(handlers).forEach(([key, handler]) => {

@@ -6,6 +6,10 @@ const {
   PLACEHOLDER_PATTERN,
 } = require('./constants');
 const {
+  DOC_MIME_TYPE,
+  FOLDER_MIME_TYPE,
+} = require('./google');
+const {
   copyFile,
   getDocumentById,
   getDocumentTextValues,
@@ -14,6 +18,7 @@ const {
   updateDocument,
 } = require('./googleUtils');
 const {
+  areContentUpdatesValid,
   deDupe,
   injectAuthValidation,
   injectCommonErrorHandling,
@@ -24,6 +29,10 @@ const handlers = {
   handleGetFileByName: async (req, res) => {
     const fileResult = await getFileMetadataByName(req.params[PARAMS.NAME]);
     if (fileResult.errorCode) return respondWithErrorData(res, fileResult);
+
+    if (fileResult.data.mimeType !== DOC_MIME_TYPE) {
+      return res.status(400).send('Template must be a Google Doc');
+    }
 
     const docResult = await getDocumentById(fileResult.data.id);
     if (docResult.errorCode) return respondWithErrorData(res, docResult);
@@ -62,8 +71,23 @@ const handlers = {
 
     const file = {};
 
+    if (!areContentUpdatesValid(contentUpdates)) {
+      return res.status(400).send('Invalid find-and-replace values specified; must provide key-value pairs of type "string"');
+    }
+
+    const templateResult = await getFileMetadataById(templateId);
+    if (templateResult.errorCode) return respondWithErrorData(res, templateResult);
+
+    if (templateResult.data.mimeType !== DOC_MIME_TYPE) {
+      return res.status(400).send('Template must be a Google Doc');
+    }
+
     const folderResult = await getFileMetadataByName(folderName, FILE_TYPES.folder);
     if (folderResult.errorCode) return respondWithErrorData(res, folderResult);
+
+    if (folderResult.data.mimeType !== FOLDER_MIME_TYPE) {
+      return res.status(400).send('Save destination must be a folder');
+    }
 
     const copiedFileResult = await copyFile(templateId, fileName, folderResult.data.id);
     if (copiedFileResult.errorCode) return respondWithErrorData(res, copiedFileResult);
