@@ -4,6 +4,7 @@ import { ErrorMessage, Label, SuccessMessage } from 'src/constants';
 import { render, screen } from '@testing-library/react';
 import App from 'components/App';
 import { AxiosError } from 'axios';
+import { INVALID_FILE_NAME_MESSAGE } from 'modules/utils';
 import { MOCK_FILE } from '__mocks__/axios';
 import routes from 'modules/routes';
 
@@ -82,6 +83,16 @@ describe('App', () => {
     await submitFileSearch();
 
     expect(screen.getByText(ErrorMessage.EmptyFileInput)).toBeInTheDocument();
+  });
+
+  it('should disallow searching for an invalid file name', async () => {
+    render(<App />);
+
+    await waitForLoadingSpinner();
+    await typeFileSearch('\\');
+    await submitFileSearch();
+
+    expect(screen.getByText(INVALID_FILE_NAME_MESSAGE)).toBeInTheDocument();
   });
 
   it('should display file creation form after template file found', async () => {

@@ -32,9 +32,8 @@ export const waitForLoadingSpinner = async () => {
   await waitForElementToBeRemoved(screen.queryByRole('progressbar'));
 };
 
-export const typeFileSearch = async () => {
-  const SAMPLE_QUERY = 'sample query';
-  await userEvent.type(screen.getByLabelText(Label.FileSearchInput), SAMPLE_QUERY);
+export const typeFileSearch = async (query: string = 'sample query') => {
+  await userEvent.type(screen.getByLabelText(Label.FileSearchInput), query);
 };
 
 export const submitFileSearch = async () => {

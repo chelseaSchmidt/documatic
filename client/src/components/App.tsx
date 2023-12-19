@@ -8,6 +8,7 @@ import {
   StringDictionary,
 } from 'src/types';
 import { Form, Formik } from 'formik';
+import { INVALID_FILE_NAME_MESSAGE, isFileNameValid } from 'modules/utils';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FileCreationForm from 'src/components/FileCreationForm';
@@ -72,6 +73,8 @@ const App = () => {
           const errors: StringDictionary = {};
           if (!values.templateFileName) {
             errors.templateFileName = ErrorMessage.EmptyFileInput;
+          } else if (!isFileNameValid(values.templateFileName)) {
+            errors.templateFileName = INVALID_FILE_NAME_MESSAGE;
           }
           return errors;
         }}

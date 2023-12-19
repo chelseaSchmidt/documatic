@@ -7,6 +7,7 @@ import {
 } from 'src/types';
 import { ErrorMessage, Label } from 'src/constants';
 import { Form, Formik } from 'formik';
+import { INVALID_FILE_NAME_MESSAGE, isFileNameValid } from 'modules/utils';
 import axios from 'axios';
 import FormField from 'components/FormField';
 import LoadingSpinner from 'components/LoadingSpinner';
@@ -74,6 +75,8 @@ const FileCreationForm = (
     METADATA_FIELDS.forEach(({ name, error }) => {
       if (!values[name]) {
         errors[name] = error;
+      } else if (!isFileNameValid(values[name])) {
+        errors[name] = INVALID_FILE_NAME_MESSAGE;
       }
     });
 

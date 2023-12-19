@@ -9,7 +9,7 @@ module.exports = {
     return false;
   },
   INVALID_FILE_NAME_MESSAGE: (
-    'Invalid name. Please only use alphanumeric characters, underscore, '
-    + 'space, or these special characters: ` ^ * - [ ] { } ~ ! @ # $ % & ( ) + = | ? > < . , \' ; :'
+    'Invalid name. Please only use alphanumeric characters, underscore, space, '
+    + 'or these special characters: - [ ] ` ^ * { } ~ ! @ # $ % & ( ) + = | ? > < . , \' ; :'
   ),
 };

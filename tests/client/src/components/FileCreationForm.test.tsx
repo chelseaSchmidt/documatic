@@ -4,6 +4,7 @@ import '@testing-library/jest-dom';
 import { ErrorMessage, Label } from 'src/constants';
 import { render, screen } from '@testing-library/react';
 import FileCreationForm from 'components/FileCreationForm';
+import { INVALID_FILE_NAME_MESSAGE } from 'modules/utils';
 import { MOCK_FILE } from '__mocks__/axios';
 
 import {
@@ -76,6 +77,32 @@ describe('FileCreationForm', () => {
     await fillOutAndSubmitFileCreationForm(incompleteInputs);
 
     expect(screen.getByText(ErrorMessage.EmptyFolderInput)).toBeInTheDocument();
+  });
+
+  it('should disallow entering an invalid file name', async () => {
+    const { placeholders } = PROPS.templateFile;
+    const inputs = [...placeholders, Label.FolderName].map(labelToLabeledInput);
+    render(<FileCreationForm {...PROPS} />);
+
+    await fillOutAndSubmitFileCreationForm([
+      ...inputs,
+      { label: Label.FileName, text: '\\' },
+    ]);
+
+    expect(screen.getByText(INVALID_FILE_NAME_MESSAGE)).toBeInTheDocument();
+  });
+
+  it('should disallow entering an invalid folder name', async () => {
+    const { placeholders } = PROPS.templateFile;
+    const inputs = [...placeholders, Label.FileName].map(labelToLabeledInput);
+    render(<FileCreationForm {...PROPS} />);
+
+    await fillOutAndSubmitFileCreationForm([
+      ...inputs,
+      { label: Label.FolderName, text: '\\' },
+    ]);
+
+    expect(screen.getByText(INVALID_FILE_NAME_MESSAGE)).toBeInTheDocument();
   });
 
   it('should display error message if error occurs when creating the file', async () => {
