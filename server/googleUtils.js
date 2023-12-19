@@ -84,8 +84,8 @@ module.exports = {
       return result;
     }
 
-    if (typeof fileName !== 'string') {
-      result.setError({ code: 400, message: `Invalid ${fileType} name` });
+    if (!isFileNameValid(fileName)) {
+      result.setError({ code: 400, message: INVALID_FILE_NAME_MESSAGE });
       return result;
     }
 

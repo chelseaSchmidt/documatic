@@ -251,7 +251,7 @@ describe('POST file route handler', () => {
 
   it('should fail with status code 400 if requested new file name is not a valid string', async () => {
     const req = constructPostRequest();
-    req.body.metadataUpdates.fileName = '*';
+    req.body.metadataUpdates.fileName = '/';
     await handleCreateFile(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
