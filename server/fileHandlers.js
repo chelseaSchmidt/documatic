@@ -22,25 +22,22 @@ const {
   deDupe,
   injectAuthValidation,
   injectCommonErrorHandling,
-  respondWithErrorData,
 } = require('./routeUtils');
 
 const handlers = {
   handleGetFileByName: async (req, res) => {
-    const fileResult = await getFileMetadataByName(req.params[PARAMS.NAME]);
-    if (fileResult.errorCode) return respondWithErrorData(res, fileResult);
+    const fileData = await getFileMetadataByName(req.params[PARAMS.NAME]);
 
-    if (fileResult.data.mimeType !== DOC_MIME_TYPE) {
+    if (fileData.mimeType !== DOC_MIME_TYPE) {
       return res.status(400).send('Template must be a Google Doc');
     }
 
-    const docResult = await getDocumentById(fileResult.data.id);
-    if (docResult.errorCode) return respondWithErrorData(res, docResult);
+    const docData = await getDocumentById(fileData.id);
 
     const file = {
-      metadata: fileResult.data,
+      metadata: fileData,
       placeholders: deDupe(
-        getDocumentTextValues(docResult.data.body.content)
+        getDocumentTextValues(docData.body.content)
           .join(' ')
           .match(PLACEHOLDER_PATTERN)
         || [],
@@ -75,48 +72,43 @@ const handlers = {
       return res.status(400).send('Invalid find-and-replace values specified; must provide key-value pairs of type "string"');
     }
 
-    const templateResult = await getFileMetadataById(templateId);
-    if (templateResult.errorCode) return respondWithErrorData(res, templateResult);
+    const templateData = await getFileMetadataById(templateId);
 
-    if (templateResult.data.mimeType !== DOC_MIME_TYPE) {
+    if (templateData.mimeType !== DOC_MIME_TYPE) {
       return res.status(400).send('Template must be a Google Doc');
     }
 
-    const folderResult = await getFileMetadataByName(folderName, FILE_TYPES.folder);
-    if (folderResult.errorCode) return respondWithErrorData(res, folderResult);
+    const folderData = await getFileMetadataByName(folderName, FILE_TYPES.folder);
 
-    if (folderResult.data.mimeType !== FOLDER_MIME_TYPE) {
+    if (folderData.mimeType !== FOLDER_MIME_TYPE) {
       return res.status(400).send('Save destination must be a folder');
     }
 
-    const copiedFileResult = await copyFile(templateId, fileName, folderResult.data.id);
-    if (copiedFileResult.errorCode) return respondWithErrorData(res, copiedFileResult);
-    file.metadata = copiedFileResult.data; // TODO: include file in error responses after this point
+    file.metadata = await copyFile(templateId, fileName, folderData.id);
 
-    const fileResult = await getFileMetadataById(file.metadata.id);
-    if (fileResult.errorCode) return respondWithErrorData(res, fileResult);
-    file.metadata = fileResult.data;
+    try {
+      file.metadata = await getFileMetadataById(file.metadata.id);
 
-    if (Object.keys(contentUpdates).length) {
-      const updatedResult = await updateDocument(
-        file.metadata.id,
-        map(contentUpdates, (value, placeholder) => ({
-          replaceAllText: {
-            replaceText: value,
-            containsText: {
-              text: placeholder,
-              matchCase: true,
+      if (Object.keys(contentUpdates).length) {
+        await updateDocument(
+          file.metadata.id,
+          map(contentUpdates, (value, placeholder) => ({
+            replaceAllText: {
+              replaceText: value,
+              containsText: {
+                text: placeholder,
+                matchCase: true,
+              },
             },
-          },
-        })),
-      );
-
-      if (updatedResult.errorCode) {
-        return res.status(207).send({
-          message: 'Copied template to a new document but unable to update document contents',
-          file,
-        });
+          })),
+        );
       }
+    } catch (error) {
+      return res.status(207).send({
+        message: 'Copied template to a new document but unable to update document contents',
+        cause: error.stack,
+        data: file,
+      });
     }
 
     return res.status(201).send(file);

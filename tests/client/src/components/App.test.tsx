@@ -1,11 +1,10 @@
 import '@testing-library/jest-dom';
 import * as useErrorState from 'hooks/useErrorState';
+import { AxiosError, MOCK_FILE } from '__mocks__/axios';
 import { ErrorMessage, Label, SuccessMessage } from 'src/constants';
 import { render, screen } from '@testing-library/react';
 import App from 'components/App';
-import { AxiosError } from 'axios';
 import { INVALID_FILE_NAME_MESSAGE } from 'modules/utils';
-import { MOCK_FILE } from '__mocks__/axios';
 import routes from 'modules/routes';
 
 import {
@@ -16,7 +15,8 @@ import {
   waitForLoadingSpinner,
 } from './utils';
 
-const SAMPLE_ERROR = 'some error';
+const SAMPLE_ERROR = 'sample error';
+const SAMPLE_CAUSE = 'sample cause';
 
 describe('App', () => {
   it('should render', async () => {
@@ -105,13 +105,31 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: Label.FileCreationButton })).toBeInTheDocument();
   });
 
-  it('should display error message if unexpected network error occurs', async () => {
+  it('should display error message if unexpected string type network error occurs', async () => {
     queueNetworkError(new AxiosError(SAMPLE_ERROR));
     render(<App />);
 
     await waitForLoadingSpinner();
 
     expect(screen.getByText(SAMPLE_ERROR)).toBeInTheDocument();
+  });
+
+  it('should display error message if unexpected object type network error occurs', async () => {
+    queueNetworkError(new AxiosError({ message: SAMPLE_ERROR, cause: SAMPLE_CAUSE }));
+    render(<App />);
+
+    await waitForLoadingSpinner();
+
+    expect(screen.getByText(SAMPLE_ERROR)).toBeInTheDocument();
+  });
+
+  it('should display error message if server is unresponsive', async () => {
+    queueNetworkError(new AxiosError({ message: SAMPLE_ERROR }, true));
+    render(<App />);
+
+    await waitForLoadingSpinner();
+
+    expect(screen.getByText(ErrorMessage.NoServerResponse)).toBeInTheDocument();
   });
 
   it('should display error message if unexpected string literal thrown', async () => {
@@ -123,8 +141,17 @@ describe('App', () => {
     expect(screen.getByText(SAMPLE_ERROR)).toBeInTheDocument();
   });
 
-  it('should display error message if error of an unexpected type occurs', async () => {
+  it('should display default error message if error of an unexpected type occurs', async () => {
     queueNetworkError(1);
+    render(<App />);
+
+    await waitForLoadingSpinner();
+
+    expect(screen.getByText(ErrorMessage.Default)).toBeInTheDocument();
+  });
+
+  it('should display default error message if empty error object thrown', async () => {
+    queueNetworkError({});
     render(<App />);
 
     await waitForLoadingSpinner();
@@ -135,7 +162,7 @@ describe('App', () => {
   it('should not crash if error handling hook fails', async () => {
     queueNetworkError(new Error(SAMPLE_ERROR), 'get', routes.AUTH_STATUS);
     jest.spyOn(useErrorState, 'default').mockImplementation(() => ([
-      '',
+      null,
       () => {},
       () => () => { throw new Error(SAMPLE_ERROR); },
     ]));

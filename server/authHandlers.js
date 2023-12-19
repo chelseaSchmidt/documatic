@@ -18,7 +18,10 @@ const handlers = {
       try {
         await saveCredentials(code);
       } catch (error) {
-        return res.status(401).send(error.message);
+        return res.status(401).send({
+          message: error.message,
+          cause: error.stack,
+        });
       }
       return res.redirect(HOME);
     }

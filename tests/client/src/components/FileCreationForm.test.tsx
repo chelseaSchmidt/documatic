@@ -1,11 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading, @typescript-eslint/require-await */
 
 import '@testing-library/jest-dom';
+import { AxiosError, MOCK_FILE } from '__mocks__/axios';
 import { ErrorMessage, Label } from 'src/constants';
 import { render, screen } from '@testing-library/react';
 import FileCreationForm from 'components/FileCreationForm';
 import { INVALID_FILE_NAME_MESSAGE } from 'modules/utils';
-import { MOCK_FILE } from '__mocks__/axios';
 
 import {
   fillOutAndSubmitFileCreationForm,
@@ -21,6 +21,7 @@ const PROPS = {
 
 const SAMPLE_INPUT = 'sample input';
 const SAMPLE_ERROR = 'sample error';
+const SAMPLE_CAUSE = 'sample cause';
 const FIELD_LABELS = [...PROPS.templateFile.placeholders, Label.FileName, Label.FolderName];
 
 const labelToLabeledInput = (label: string) => ({ label, text: SAMPLE_INPUT });
@@ -106,7 +107,7 @@ describe('FileCreationForm', () => {
   });
 
   it('should display error message if error occurs when creating the file', async () => {
-    queueNetworkError(new Error(SAMPLE_ERROR), 'post');
+    queueNetworkError(new AxiosError({ message: SAMPLE_ERROR, cause: SAMPLE_CAUSE }), 'post');
     render(<FileCreationForm {...PROPS} />);
 
     await fillOutAndSubmitFileCreationForm(labeledInputs);

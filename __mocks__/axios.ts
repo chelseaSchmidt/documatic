@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/lines-between-class-members */
+
 import routes from 'modules/routes';
 
-export class AxiosError extends Error {
-  response = { data: '' };
+export class AxiosError {
+  response;
+  request;
 
-  constructor(message: string) {
-    super();
-    this.response.data = message;
+  constructor(data: unknown, isRequest = false) {
+    if (isRequest) this.request = { data };
+    else this.response = { data };
   }
 }
 

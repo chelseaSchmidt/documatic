@@ -43,7 +43,7 @@ const FileCreationForm = (
     setIsAuthenticated,
   }: FileCreationFormProps,
 ) => {
-  const [errorMessage, setErrorMessage, guard] = useErrorState();
+  const [errorData, setErrorData, guard] = useErrorState(null);
   const [createdFile, setCreatedFile] = useState<Nullable<File>>(null);
 
   const { placeholders: contentFieldNames } = templateFile;
@@ -51,7 +51,7 @@ const FileCreationForm = (
   const createFile = guard<StringDictionary, void>(
     async (values) => {
       if (await getAuthStatus()) {
-        setErrorMessage('');
+        setErrorData(null);
         setCreatedFile(null);
         const { data }: FileResponse = await axios.post(
           `${routes.FILE}`,
@@ -64,7 +64,7 @@ const FileCreationForm = (
         setCreatedFile(data);
       } else {
         setIsAuthenticated(false);
-        setErrorMessage(ErrorMessage.AuthExpired);
+        setErrorData({ message: ErrorMessage.AuthExpired });
       }
     },
   );
@@ -144,7 +144,10 @@ const FileCreationForm = (
         </Formik>
       </div>
       {
-        errorMessage && <div>{errorMessage}</div>
+        errorData?.message && <div>{errorData.message}</div>
+      }
+      {
+        errorData?.cause && <div>{errorData.cause}</div>
       }
       {
         createdFile && <div>{JSON.stringify(createdFile)}</div>

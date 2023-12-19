@@ -24,7 +24,7 @@ interface AuthStatusResponse {
 
 const App = () => {
   const [loading, , withLoadingState] = useLoadingState();
-  const [errorMessage, setErrorMessage, guard] = useErrorState();
+  const [errorData, setErrorData, guard] = useErrorState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [templateFile, setTemplateFile] = useState<Nullable<File>>(null);
 
@@ -38,13 +38,13 @@ const App = () => {
   const getFile = guard<string, void>(
     async (fileName) => {
       if (await getAuthStatus()) {
-        setErrorMessage('');
+        setErrorData(null);
         setTemplateFile(null);
         const { data }: FileResponse = await axios.get(`${routes.FILE}/${encodeURIComponent(fileName)}`);
         setTemplateFile(data);
       } else {
         setIsAuthenticated(false);
-        setErrorMessage(ErrorMessage.AuthExpired);
+        setErrorData({ message: ErrorMessage.AuthExpired });
       }
     },
   );
@@ -54,7 +54,7 @@ const App = () => {
       setIsAuthenticated(await getAuthStatus() ?? false);
     });
 
-    setAuthStatus().catch((error: Error) => setErrorMessage(error.message));
+    setAuthStatus().catch(({ message }: Error) => setErrorData({ message }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -121,7 +121,10 @@ const App = () => {
         templateFile && <div style={{ margin: '20px 0' }}>{JSON.stringify(templateFile)}</div>
       }
       {
-        errorMessage && <div>{errorMessage}</div>
+        errorData?.message && <div>{errorData.message}</div>
+      }
+      {
+        errorData?.cause && <div>{errorData.cause}</div>
       }
       {
         loading ? <LoadingSpinner /> : null

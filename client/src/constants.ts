@@ -14,6 +14,7 @@ export enum SuccessMessage {
 
 export enum ErrorMessage {
   AuthExpired = 'Authentication expired, please sign in again',
+  NoServerResponse = 'Server not responding',
   EmptyFileInput = 'Please enter a file name',
   EmptyFolderInput = 'Please enter a folder name',
   Default = 'Something went wrong',

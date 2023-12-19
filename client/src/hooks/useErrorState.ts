@@ -1,33 +1,64 @@
-import { AsyncMethod, Decorator } from 'src/types';
+import { AsyncMethod, Decorator, Nullable } from 'src/types';
 import { AxiosError } from 'axios';
 import { ErrorMessage } from 'src/constants';
 import { useState } from 'react';
 
-const useErrorState = (initial = ''): [
-  string,
-  React.Dispatch<React.SetStateAction<string>>,
+interface ErrorData {
+  message: string;
+  cause?: string;
+}
+
+interface AxiosServerError {
+  response: {
+    data: string | ErrorData;
+  };
+}
+
+const axiosErrorToErrorData = (error: AxiosServerError) => {
+  const { response: { data } } = error;
+
+  return typeof data === 'string'
+    ? { message: data }
+    : data;
+};
+
+const useErrorState = (initial: Nullable<ErrorData>): [
+  Nullable<ErrorData>,
+  React.Dispatch<React.SetStateAction<Nullable<ErrorData>>>,
   Decorator,
 ] => {
-  const [errorMessage, setErrorMessage] = useState(initial);
+  const [errorData, setErrorData] = useState(initial);
 
   const guard = <I, R>(originalMethod: AsyncMethod<I, R>) => {
     return async (...args: I[]) => {
       let result = null;
+
       try {
         result = await originalMethod(...args);
       } catch (error) {
-        setErrorMessage(
-          (typeof error === 'string' ? error : null)
-          || ((error as AxiosError).response?.data as string)
-          || (error as Error).message
-          || ErrorMessage.Default,
-        );
+        let data: ErrorData = { message: ErrorMessage.Default };
+
+        if (typeof error === 'string') {
+          data.message = error;
+        }
+
+        if (error instanceof Error) {
+          data = { message: error.message, cause: error.stack };
+        }
+
+        if (error instanceof AxiosError) {
+          if (error.request) data.message = ErrorMessage.NoServerResponse;
+          if (error.response) data = axiosErrorToErrorData(<AxiosServerError>error);
+        }
+
+        setErrorData(data);
       }
+
       return result;
     };
   };
 
-  return [errorMessage, setErrorMessage, guard];
+  return [errorData, setErrorData, guard];
 };
 
 export default useErrorState;

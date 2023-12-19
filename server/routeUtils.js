@@ -1,25 +1,29 @@
 /* eslint-plugin-disable @typescript-eslint */
+
 const { isAuthenticated } = require('./google');
 
+class NetworkError extends Error {
+  constructor(code, message, cause) {
+    super(message, { cause });
+    this.statusCode = code;
+  };
+}
+
 const isString = (value) => typeof value === 'string';
+const isObject = (value) => typeof value === 'object' && !Array.isArray(value);
 const areAllKeysStrings = (object) => !Object.keys(object).map(isString).includes(false);
 const areAllValuesStrings = (object) => !Object.values(object).map(isString).includes(false);
 
 module.exports = {
+  NetworkError,
+
   deDupe: (array) => Array.from(new Set(array)),
 
-  respondWithErrorData: (res, data) => res.status(data.errorCode).send(data.errorMessage),
-
-  areContentUpdatesValid: (contentUpdates) => {
-    if (typeof contentUpdates === 'object') {
-      if (!Array.isArray(contentUpdates)) {
-        if (areAllKeysStrings(contentUpdates)) {
-          return areAllValuesStrings(contentUpdates);
-        }
-      }
-    }
-    return false;
-  },
+  areContentUpdatesValid: (contentUpdates) => (
+    isObject(contentUpdates)
+    && areAllKeysStrings(contentUpdates)
+    && areAllValuesStrings(contentUpdates)
+  ),
 
   injectAuthValidation: (handlers) => {
     Object.entries(handlers).forEach(([key, handler]) => {
@@ -41,7 +45,17 @@ module.exports = {
         try {
           await handler(req, res);
         } catch (error) {
-          res.status(500).send(`Internal error: ${error.message}`);
+          if (error instanceof NetworkError) {
+            res.status(error.statusCode).send({
+              message: error.message,
+              cause: error.cause?.stack,
+            });
+          } else {
+            res.status(500).send({
+              message: error.message,
+              cause: error.stack,
+            });
+          }
         }
       };
     });

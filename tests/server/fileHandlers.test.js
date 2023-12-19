@@ -173,12 +173,6 @@ describe('GET file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 502 if the response from Google has an unexpected structure', async () => {
-    drive.files.list.mockImplementationOnce(() => ({ data: {} }));
-    await handleGetFileByName(REQ, res);
-    expect(res.status).toHaveBeenCalledWith(502);
-  });
-
   it('should fail with status code 500 if file can\'t be retrieved by its internal ID', async () => {
     drive.files.get.mockImplementationOnce(throwError);
     await handleGetFileByName(REQ, res);
@@ -277,13 +271,13 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
-  it('should fail with status code 500 if file can\'t be retrieved after creation', async () => {
+  it('should partially fail with status code 207 if file can\'t be retrieved after creation', async () => {
     drive.files.get
       .mockImplementationOnce(() => ({ data: FILE_METADATA }))
       .mockImplementationOnce(() => ({ data: FOLDER_METADATA }))
       .mockImplementationOnce(throwError);
     await handleCreateFile(constructPostRequest(), res);
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(207);
   });
 
   it('should fail with status code 500 if the template file can\'t be copied after validating inputs', async () => {
