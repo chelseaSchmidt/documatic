@@ -1,4 +1,5 @@
 /* eslint-disable prefer-arrow-callback */
+
 import 'styles/main.css';
 import { ErrorMessage, Label, SuccessMessage } from 'src/constants';
 import {
@@ -117,9 +118,6 @@ const App = () => {
         {Label.AuthLink}
       </a>
 
-      {
-        templateFile && <div style={{ margin: '20px 0' }}>{JSON.stringify(templateFile)}</div>
-      }
       {
         errorData?.message && <div>{errorData.message}</div>
       }

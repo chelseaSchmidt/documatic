@@ -1,9 +1,5 @@
-const map = require('lodash/map');
 const { PARAMS } = require('../modules/routes');
-const {
-  FILE_TYPES,
-  PLACEHOLDER_PATTERN,
-} = require('./constants');
+const { FILE_TYPES } = require('./constants');
 const {
   DOC_MIME_TYPE,
   FOLDER_MIME_TYPE,
@@ -11,37 +7,42 @@ const {
 const {
   copyFile,
   getDocumentById,
-  getDocumentTextValues,
   getFileMetadataById,
   getFileMetadataByName,
-  updateDocument,
 } = require('./googleUtils');
 const {
-  areContentUpdatesValid,
-  deDupe,
+  getPlaceholdersFromTextValues,
+  toNullIfNoPlaceholders,
+  addPlaceholdersToTable,
+  areTextReplacementsValid,
+  areTableReplacementsValid,
   injectAuthValidation,
   injectCommonErrorHandling,
 } = require('./routeUtils');
+const {
+  getTables,
+  getNonTableTextValues,
+  replaceDocumentTextValues,
+  replaceDocumentTables,
+} = require('./docUtils');
 
 const handlers = {
   handleGetFileByName: async (req, res) => {
-    const fileData = await getFileMetadataByName(req.params[PARAMS.NAME]);
+    const file = {};
 
-    if (fileData.mimeType !== DOC_MIME_TYPE) {
+    file.metadata = await getFileMetadataByName(req.params[PARAMS.NAME]);
+
+    if (file.metadata.mimeType !== DOC_MIME_TYPE) {
       return res.status(400).send('Template must be a Google Doc');
     }
 
-    const docData = await getDocumentById(fileData.id);
+    const document = await getDocumentById(file.metadata.id);
 
-    const file = {
-      metadata: fileData,
-      placeholders: deDupe(
-        getDocumentTextValues(docData.body.content)
-          .join(' ')
-          .match(PLACEHOLDER_PATTERN)
-        || [],
-      ),
-    };
+    file.placeholders = getPlaceholdersFromTextValues(getNonTableTextValues(document.body.content));
+
+    file.tables = getTables(document.body.content)
+      .map((table) => addPlaceholdersToTable(table, file))
+      .map(toNullIfNoPlaceholders);
 
     return res.status(200).send(file);
   },
@@ -52,23 +53,24 @@ const handlers = {
       || !req.body.metadataUpdates?.fileName
       || !req.body.metadataUpdates?.folderName
     ) {
-      return res.status(400).send(
-        'Malformed request body; missing template ID, file name, and/or destination folder name. '
-        + 'Example request body: '
-        + '{ templateId: "...", metadataUpdates: { fileName: "...", folderName: "..." } }',
-      );
+      return res.status(400).send('Malformed request body; missing template ID, file name, and/or destination folder name');
     }
 
     const {
       templateId,
       metadataUpdates: { fileName, folderName },
-      contentUpdates = {},
+      textReplacements = {},
+      tableReplacements = [],
     } = req.body;
 
     const file = {};
 
-    if (!areContentUpdatesValid(contentUpdates)) {
-      return res.status(400).send('Invalid find-and-replace values specified; must provide key-value pairs of type "string"');
+    if (!areTextReplacementsValid(textReplacements)) {
+      return res.status(400).send('Invalid text replacement values specified; must provide key-value pairs of type "string"');
+    }
+
+    if (!areTableReplacementsValid(tableReplacements)) {
+      return res.status(400).send('Table replacement data does not match expected schema');
     }
 
     const templateData = await getFileMetadataById(templateId);
@@ -87,27 +89,20 @@ const handlers = {
 
     try {
       file.metadata = await getFileMetadataById(file.metadata.id);
-
-      if (Object.keys(contentUpdates).length) {
-        await updateDocument(
-          file.metadata.id,
-          map(contentUpdates, (value, placeholder) => ({
-            replaceAllText: {
-              replaceText: value,
-              containsText: {
-                text: placeholder,
-                matchCase: true,
-              },
-            },
-          })),
-        );
-      }
     } catch (error) {
-      return res.status(207).send({
-        message: 'Copied template to a new document but unable to update document contents',
-        cause: error.stack,
-        data: file,
-      });
+      file.message = 'Copied template to a new document but unable to retrieve it';
+      file.cause = error.cause?.stack || error.stack;
+      return res.status(207).send(file);
+    }
+
+    try {
+      await replaceDocumentTables(file.metadata.id, tableReplacements);
+
+      await replaceDocumentTextValues(file.metadata.id, textReplacements);
+    } catch (error) {
+      file.message = 'Created a new document but not all content updates were successful';
+      file.cause = error.cause?.stack || error.stack;
+      return res.status(207).send(file);
     }
 
     return res.status(201).send(file);

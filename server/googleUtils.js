@@ -8,30 +8,7 @@ const {
 
 const toSentenceCase = (text) => text[0].toUpperCase() + text.slice(1).toLowerCase();
 
-const getParagraphTextValues = (paragraph) => (
-  paragraph?.elements?.map((element) => element.textRun?.content || '')
-  || []
-);
-
-const getTableElements = (table) => (
-  table?.tableRows?.flatMap((row) => row.tableCells?.flatMap((cell) => cell.content || {}) || [])
-  || []
-);
-
-const getDocumentTextValues = (elements = []) => {
-  let textSegments = [];
-  elements.forEach((element) => {
-    textSegments = textSegments
-      .concat(getParagraphTextValues(element.paragraph))
-      .concat(getDocumentTextValues(getTableElements(element.table)))
-      .concat(getDocumentTextValues(element.tableOfContents?.content));
-  });
-  return textSegments;
-};
-
 module.exports = {
-  getDocumentTextValues,
-
   getDocumentById: async (documentId) => {
     try {
       return (await docs.documents.get({ documentId })).data;

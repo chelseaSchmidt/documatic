@@ -1,6 +1,7 @@
 import {
   AsyncMethod,
   File,
+  FileCreationFormValues,
   FileResponse,
   Nullable,
   StringDictionary,
@@ -14,6 +15,7 @@ import LoadingSpinner from 'components/LoadingSpinner';
 import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 import routes from 'modules/routes';
+import TableReplacementsFormFragment from 'components/TableReplacementsFormFragment';
 import useErrorState from 'hooks/useErrorState';
 import { useState } from 'react';
 
@@ -31,8 +33,16 @@ const METADATA_FIELDS = [
 
 const METADATA_FIELD_NAMES = METADATA_FIELDS.map((field) => field.name);
 
-const getContentUpdates = (updates: StringDictionary) => omit(updates, METADATA_FIELD_NAMES);
-const getMetadataUpdates = (updates: StringDictionary) => pick(updates, METADATA_FIELD_NAMES);
+const getTextReplacements = (formValues: FileCreationFormValues) => omit(
+  formValues,
+  [...METADATA_FIELD_NAMES, 'tableReplacements'],
+);
+
+const getMetadataUpdates = (formValues: FileCreationFormValues) => pick(
+  formValues,
+  METADATA_FIELD_NAMES,
+);
+
 const toInitialValues = (names: string[]) => names.reduce((values, name) => ({ ...values, [name]: '' }), {});
 
 const FileCreationForm = (
@@ -46,9 +56,12 @@ const FileCreationForm = (
   const [errorData, setErrorData, guard] = useErrorState(null);
   const [createdFile, setCreatedFile] = useState<Nullable<File>>(null);
 
-  const { placeholders: contentFieldNames } = templateFile;
+  const {
+    placeholders: textReplacementFieldNames,
+    tables,
+  } = templateFile;
 
-  const createFile = guard<StringDictionary, void>(
+  const createFile = guard<FileCreationFormValues, void>(
     async (values) => {
       if (await getAuthStatus()) {
         setErrorData(null);
@@ -58,7 +71,8 @@ const FileCreationForm = (
           {
             templateId: templateFile.metadata.id,
             metadataUpdates: getMetadataUpdates(values),
-            contentUpdates: getContentUpdates(values),
+            textReplacements: getTextReplacements(values),
+            tableReplacements: values.tableReplacements,
           },
         );
         setCreatedFile(data);
@@ -69,7 +83,7 @@ const FileCreationForm = (
     },
   );
 
-  const validateForm = (values: StringDictionary) => {
+  const validateForm = (values: FileCreationFormValues) => {
     const errors: StringDictionary = {};
 
     METADATA_FIELDS.forEach(({ name, error }) => {
@@ -80,11 +94,7 @@ const FileCreationForm = (
       }
     });
 
-    contentFieldNames.forEach((name) => {
-      if (!values[name]) {
-        errors[name] = `Missing input for ${name}`;
-      }
-    });
+    // TODO: textReplacements and tableReplacements validation
 
     return errors;
   };
@@ -94,8 +104,14 @@ const FileCreationForm = (
       <div style={{ margin: '20px 0' }}>
         <Formik
           initialValues={{
-            ...toInitialValues(contentFieldNames),
+            ...toInitialValues(textReplacementFieldNames),
             ...toInitialValues(METADATA_FIELD_NAMES),
+            tableReplacements: tables.map((table) => (table ? {
+              rows: table.rows?.map((row) => ({
+                metadata: row.metadata,
+                textReplacements: toInitialValues(row.placeholders),
+              })),
+            } : null)),
           }}
           validate={validateForm}
           onSubmit={
@@ -106,11 +122,11 @@ const FileCreationForm = (
           }
         >
           {
-            ({ isSubmitting }) => {
+            ({ values, isSubmitting }) => {
               return (
                 <Form>
                   {
-                    contentFieldNames.map((name) => (
+                    textReplacementFieldNames.map((name) => (
                       <div key={name}>
                         <FormField
                           label={name}
@@ -120,6 +136,9 @@ const FileCreationForm = (
                       </div>
                     ))
                   }
+                  <TableReplacementsFormFragment
+                    tableReplacements={values.tableReplacements}
+                  />
                   {
                     METADATA_FIELDS.map(({ name, label }) => (
                       <div key={name} style={{ margin: '10px 0' }}>
@@ -151,6 +170,13 @@ const FileCreationForm = (
       }
       {
         createdFile && <div>{JSON.stringify(createdFile)}</div>
+      }
+      {
+        createdFile?.metadata.webViewLink && (
+          <a href={createdFile.metadata.webViewLink} target="_blank" rel="noreferrer">
+            {createdFile.metadata.webViewLink}
+          </a>
+        )
       }
     </>
   );

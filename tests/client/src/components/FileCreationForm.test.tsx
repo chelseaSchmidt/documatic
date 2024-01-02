@@ -13,7 +13,16 @@ import {
 } from './utils';
 
 const PROPS = {
-  templateFile: { metadata: {}, placeholders: ['{field}'] },
+  templateFile: {
+    metadata: {},
+    placeholders: ['{field}'],
+    tables: [{
+      rows: [{
+        metadata: {},
+        placeholders: [],
+      }],
+    }],
+  },
   getAuthStatus: jest.fn(async () => true),
   isAuthenticated: true,
   setIsAuthenticated: () => {},
@@ -48,16 +57,6 @@ describe('FileCreationForm', () => {
     await fillOutAndSubmitFileCreationForm(labeledInputs);
 
     expect(screen.getByText(ErrorMessage.AuthExpired)).toBeInTheDocument();
-  });
-
-  it('should disallow creating a file when a placeholder field has no replacement input entered', async () => {
-    const { placeholders } = PROPS.templateFile;
-    const incompleteInputs = [Label.FileName, Label.FolderName].map(labelToLabeledInput);
-    render(<FileCreationForm {...PROPS} />);
-
-    await fillOutAndSubmitFileCreationForm(incompleteInputs);
-
-    expect(screen.getByText(`Missing input for ${placeholders[0]}`)).toBeInTheDocument();
   });
 
   it('should disallow creating a file when no file name entered', async () => {

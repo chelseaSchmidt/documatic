@@ -52,7 +52,9 @@ describe('App', () => {
     await typeFileSearch();
     await submitFileSearch();
 
-    expect(screen.getByText(JSON.stringify(MOCK_FILE))).toBeInTheDocument();
+    MOCK_FILE.placeholders.forEach((placeholder) => {
+      expect(screen.getByLabelText(placeholder)).toBeInTheDocument();
+    });
   });
 
   it('should disable querying for a template file when not authenticated', async () => {

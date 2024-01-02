@@ -43,8 +43,16 @@ const DOC = {
   },
 };
 const FILE_METADATA = { id: DOC_FILE_ID, mimeType: DOC_MIME_TYPE };
-const FILE = { metadata: FILE_METADATA, placeholders: DETECTED_PLACEHOLDERS };
-const FILE_NO_PLACEHOLDERS = { metadata: FILE_METADATA, placeholders: [] };
+const FILE = {
+  metadata: FILE_METADATA,
+  placeholders: DETECTED_PLACEHOLDERS,
+  tables: Array(7).fill(null),
+};
+const FILE_NO_PLACEHOLDERS = {
+  metadata: FILE_METADATA,
+  placeholders: [],
+  tables: [],
+};
 const FOLDER_METADATA = { id: FOLDER_ID, mimeType: FOLDER_MIME_TYPE };
 const REQ = { params: { name: DOC_FILE_NAME } };
 
@@ -56,7 +64,7 @@ const constructPostRequest = ({
   hasTemplateId = true,
   hasFileName = true,
   hasFolderName = true,
-  hasContentUpdates = true,
+  hasTextReplacements = true,
 } = {}) => {
   return {
     body: {
@@ -65,9 +73,10 @@ const constructPostRequest = ({
         fileName: hasFileName ? DOC_FILE_NAME : undefined,
         folderName: hasFolderName ? FOLDER_NAME : undefined,
       },
-      contentUpdates: hasContentUpdates
+      textReplacements: hasTextReplacements
         ? { [SAMPLE_PLACEHOLDER]: SAMPLE_TEXT }
         : {},
+      tableReplacements: Array(7).fill(null),
     },
   };
 };
@@ -192,7 +201,7 @@ describe('POST file route handler', () => {
   });
 
   it('should create a file without updating its content', async () => {
-    await handleCreateFile(constructPostRequest({ hasContentUpdates: false }), res);
+    await handleCreateFile(constructPostRequest({ hasTextReplacements: false }), res);
     expect(res.status).toHaveBeenCalledWith(201);
   });
 
@@ -214,16 +223,16 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if requested content updates aren\'t strings', async () => {
+  it('should fail with status code 400 if requested text replacements aren\'t strings', async () => {
     const req = constructPostRequest();
-    req.body.contentUpdates = { number: 123 };
+    req.body.textReplacements = { number: 123 };
     await handleCreateFile(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if requested content updates are malformed', async () => {
+  it('should fail with status code 400 if requested text replacements are malformed', async () => {
     const req = constructPostRequest();
-    req.body.contentUpdates = [];
+    req.body.textReplacements = [];
     await handleCreateFile(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });

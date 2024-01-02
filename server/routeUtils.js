@@ -1,4 +1,5 @@
 const { isAuthenticated } = require('./google');
+const { PLACEHOLDER_PATTERN } = require('./constants');
 
 class NetworkError extends Error {
   constructor(code, message, cause) {
@@ -7,21 +8,69 @@ class NetworkError extends Error {
   }
 }
 
+const ROW_PROPERTIES = ['metadata', 'textReplacements'];
+
+const deDupe = (array) => Array.from(new Set(array));
 const isString = (value) => typeof value === 'string';
 const isObject = (value) => typeof value === 'object' && !Array.isArray(value);
-const areAllKeysStrings = (object) => !Object.keys(object).map(isString).includes(false);
-const areAllValuesStrings = (object) => !Object.values(object).map(isString).includes(false);
+const isNullableObject = (value) => isObject(value) || value === null || value === undefined;
+const isRowCorrectShape = (object) => ROW_PROPERTIES.every((property) => property in object);
+const toRows = ({ rows }) => rows;
+const toTextReplacements = ({ textReplacements }) => textReplacements;
+
+const areTextReplacementsValid = (textReplacements) => (
+  isObject(textReplacements)
+  && Object.keys(textReplacements).every(isString)
+  && Object.values(textReplacements).every(isString)
+);
+
+const getPlaceholdersFromTextValues = (textValues = []) => (
+  deDupe(textValues.join(' ').match(PLACEHOLDER_PATTERN) || [])
+);
 
 module.exports = {
   NetworkError,
 
-  deDupe: (array) => Array.from(new Set(array)),
+  areTextReplacementsValid,
 
-  areContentUpdatesValid: (contentUpdates) => (
-    isObject(contentUpdates)
-    && areAllKeysStrings(contentUpdates)
-    && areAllValuesStrings(contentUpdates)
+  areTableReplacementsValid: (tableReplacements) => {
+    const nonNullTables = tableReplacements.filter(Boolean);
+    const flattenedRows = nonNullTables.flatMap(toRows);
+
+    return (
+      Array.isArray(tableReplacements)
+      && (
+        !tableReplacements.length
+        || (
+          tableReplacements.every(isNullableObject)
+          && nonNullTables.map(toRows).every(Array.isArray)
+          && flattenedRows.every(isRowCorrectShape)
+          && flattenedRows.map(toTextReplacements).every(areTextReplacementsValid)
+          // TODO: schema validation on row.metadata
+        )
+      )
+    );
+  },
+
+  getPlaceholdersFromTextValues,
+
+  toNullIfNoPlaceholders: (table) => (
+    table.rows.filter((row) => row.placeholders.length).length
+      ? table
+      : null
   ),
+
+  addPlaceholdersToTable: (table, file) => ({
+    rows: table.rows.map(
+      ({ textValues, metadata }) => ({
+        placeholders: (
+          getPlaceholdersFromTextValues(textValues)
+            .filter((placeholder) => !file.placeholders.includes(placeholder))
+        ),
+        metadata,
+      }),
+    ),
+  }),
 
   injectAuthValidation: (handlers) => {
     Object.entries(handlers).forEach(([key, handler]) => {

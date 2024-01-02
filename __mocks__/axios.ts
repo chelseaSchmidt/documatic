@@ -12,7 +12,11 @@ export class AxiosError {
   }
 }
 
-export const MOCK_FILE = { metadata: { id: '123' }, placeholders: [] };
+export const MOCK_FILE = {
+  metadata: { id: '123' },
+  placeholders: ['{abc}'],
+  tables: [],
+};
 
 export default {
   get: (route: string) => {
