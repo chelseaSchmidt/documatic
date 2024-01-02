@@ -1,5 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
-
 const { FILE_TYPES } = require('./constants');
 const { drive, docs } = require('./google');
 const { NetworkError } = require('./routeUtils');

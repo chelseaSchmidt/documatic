@@ -1,7 +1,7 @@
 /* eslint-env node */
+
 module.exports = {
   env: {
-    browser: true,
     node: true,
     es6: true,
     jest: true,
@@ -10,47 +10,29 @@ module.exports = {
     'eslint:recommended',
     'airbnb',
     'airbnb/hooks',
-    'airbnb-typescript',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-type-checked',
-    'plugin:react/recommended',
-    'plugin:react/jsx-runtime',
     'plugin:import/recommended',
-    'plugin:import/typescript',
   ],
-  parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: true,
-    tsconfigRootDir: __dirname,
     ecmaVersion: 'latest',
     sourceType: 'module',
-    ecmaFeatures: { jsx: true },
   },
-  plugins: ['@typescript-eslint', 'react', 'import', 'disable'],
-  processor: 'disable/disable',
+  plugins: ['import'],
   root: true,
   ignorePatterns: [
-    'client/public',
     'node_modules',
+    'client',
     'dist',
     'tests/coverage',
+    'tests/client',
   ],
   settings: {
     'import/resolver': {
-      typescript: true,
       node: true,
     },
   },
   rules: {
-    indent: 'error',
-    quotes: ['error', 'single'],
-    semi: 'error',
     'arrow-body-style': 'off',
-    'comma-dangle': 'error',
     'no-console': 'off',
-    'no-redeclare': 'error',
-    'no-unused-vars': 'error',
-    'object-curly-spacing': 'error',
     'sort-imports': [
       'error',
       {
@@ -63,20 +45,5 @@ module.exports = {
     ],
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     'import/no-unresolved': 'error',
-    'jsx-a11y/label-has-associated-control': [
-      'error',
-      {
-        depth: 3,
-        assert: 'either',
-      },
-    ],
-    'react/function-component-definition': 'off',
-    'react/require-default-props': 'off',
-    '@typescript-eslint/indent': ['error', 2],
-    '@typescript-eslint/no-misused-promises': [
-      'error',
-      { checksVoidReturn: { attributes: false } },
-    ],
-    '@typescript-eslint/quotes': ['error', 'single'],
   },
 };

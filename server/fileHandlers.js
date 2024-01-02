@@ -1,4 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
 const map = require('lodash/map');
 const { PARAMS } = require('../modules/routes');
 const {

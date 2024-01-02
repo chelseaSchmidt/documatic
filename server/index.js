@@ -1,4 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');

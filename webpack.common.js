@@ -1,4 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
 const path = require('path');
 
 module.exports = {

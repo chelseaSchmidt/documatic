@@ -1,5 +1,4 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-plugin-disable @typescript-eslint */
+/* eslint-disable class-methods-use-this, lines-between-class-members */
 
 module.exports = {
   google: {

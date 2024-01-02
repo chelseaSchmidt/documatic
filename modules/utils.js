@@ -1,5 +1,4 @@
 /* eslint-disable no-useless-escape */
-/* eslint-plugin-disable @typescript-eslint */
 
 module.exports = {
   isFileNameValid: (fileName) => {

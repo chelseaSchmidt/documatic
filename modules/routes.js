@@ -1,5 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
-
 module.exports = {
   HOME: '/',
   AUTH: '/auth',

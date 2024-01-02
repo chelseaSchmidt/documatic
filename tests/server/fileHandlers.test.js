@@ -1,4 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
 /* eslint-disable global-require */
 /** @jest-environment node */
 

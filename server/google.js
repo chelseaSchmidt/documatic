@@ -1,4 +1,3 @@
-/* eslint-plugin-disable @typescript-eslint */
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');

@@ -1,12 +1,10 @@
-/* eslint-plugin-disable @typescript-eslint */
-
 const { isAuthenticated } = require('./google');
 
 class NetworkError extends Error {
   constructor(code, message, cause) {
     super(message, { cause });
     this.statusCode = code;
-  };
+  }
 }
 
 const isString = (value) => typeof value === 'string';
