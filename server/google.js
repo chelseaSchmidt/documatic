@@ -1,21 +1,22 @@
-const fs = require('fs');
-const path = require('path');
 const { google } = require('googleapis');
+const { PORT } = require('./constants');
 const routes = require('../modules/routes');
 
-const REDIRECT_URL = `http://localhost:3000${routes.AUTH_REDIRECT}`;
+const isProd = process.env.MODE === 'prod';
+const redirectUrl = isProd
+  ? `https://chelseadocumatic.com${routes.AUTH_REDIRECT}`
+  : `http://localhost:${PORT}${routes.AUTH_REDIRECT}`;
 
-const {
-  web: {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-  },
-} = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'credentials.json'), 'utf8'));
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+  throw new Error('Missing required environment variables GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET');
+}
 
 const oauth2Client = new google.auth.OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  redirectUrl,
 );
 
 google.options({ auth: oauth2Client });

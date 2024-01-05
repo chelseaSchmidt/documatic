@@ -6,3 +6,4 @@ dist
 coverage/
 todo.txt
 credentials.json
+.env

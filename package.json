@@ -6,8 +6,9 @@
   "scripts": {
     "test": "jest",
     "lint": "npx eslint . && npx eslint ./client && npx eslint ./tests/client",
-    "start-dev": "nodemon server",
-    "start-prod": "MODE=prod node server",
+    "start-dev": "nodemon --env-file=.env server",
+    "start-prod": "MODE=prod node --env-file=.env server",
+    "start-container": "node server",
     "build-dev": "webpack --config webpack.dev.js",
     "build-watch": "webpack -w --config webpack.dev.js",
     "build-prod": "webpack --config webpack.prod.js"

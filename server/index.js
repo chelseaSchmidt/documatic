@@ -1,7 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
-const { PORT, HOME_URL } = require('./constants');
+const { PORT } = require('./constants');
 const routes = require('../modules/routes');
 const { PARAMS, toParam } = require('../modules/routes');
 const {
@@ -15,7 +15,7 @@ const {
 } = require('./authHandlers');
 
 const isProd = process.env.MODE === 'prod';
-const startupMessage = `Listening at ${HOME_URL} in ${isProd ? 'production' : 'development'} mode`;
+const startupMessage = `Listening at port ${PORT} in ${isProd ? 'production' : 'development'} mode`;
 
 const server = express();
 

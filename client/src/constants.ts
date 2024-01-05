@@ -1,5 +1,5 @@
 export enum Label {
-  App = 'App',
+  AppHeader = 'documatic',
   AuthLink = 'Sign in',
   FileSearchButton = 'Get file',
   FileSearchInput = 'Template file input',

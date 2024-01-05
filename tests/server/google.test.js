@@ -1,11 +1,10 @@
 /* eslint-disable global-require */
 /** @jest-environment node */
 
-['path'].forEach((module) => jest.mock(module));
+process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
 
-jest.mock('fs', () => ({
-  readFileSync: () => '{ "web": { "client_id": "", "client_secret": "" } }',
-}));
+['path'].forEach((module) => jest.mock(module));
 
 const {
   saveCredentials,

@@ -65,7 +65,7 @@ const App = () => {
         role="heading"
         aria-level={1}
       >
-        {Label.App}
+        {Label.AppHeader}
       </div>
 
       <Formik

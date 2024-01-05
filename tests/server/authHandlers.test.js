@@ -9,10 +9,6 @@ const res = { status: jest.fn(() => ({ send })), redirect: jest.fn() };
 
 ['path'].forEach((module) => jest.mock(module));
 
-jest.mock('fs', () => ({
-  readFileSync: () => '{ "web": { "client_id": "", "client_secret": "" } }',
-}));
-
 jest.mock('../../server/google', () => {
   return {
     saveCredentials: jest.fn(),

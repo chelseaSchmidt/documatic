@@ -21,7 +21,7 @@ const SAMPLE_CAUSE = 'sample cause';
 describe('App', () => {
   it('should render', async () => {
     render(<App />);
-    expect(await screen.findByRole('heading', { name: Label.App })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: Label.AppHeader })).toBeInTheDocument();
   });
 
   it('should load authenticated status on mount', async () => {

@@ -3,10 +3,6 @@
 
 ['morgan', 'path'].forEach((module) => jest.mock(module));
 
-jest.mock('fs', () => ({
-  readFileSync: () => '{ "web": { "client_id": "", "client_secret": "" } }',
-}));
-
 jest.mock('express', () => {
   const express = () => ({
     get: () => {},
@@ -20,6 +16,11 @@ jest.mock('express', () => {
 });
 
 describe('server', () => {
+  beforeAll(() => {
+    process.env.GOOGLE_CLIENT_ID = 'google-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
+  });
+
   beforeEach(() => {
     jest.resetModules();
     process.env.MODE = undefined;
