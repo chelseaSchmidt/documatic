@@ -1,4 +1,10 @@
-/* eslint-disable react/jsx-props-no-spreading, @typescript-eslint/require-await */
+/*
+  eslint-disable
+  react/jsx-props-no-spreading,
+  @typescript-eslint/require-await,
+  no-await-in-loop,
+  no-restricted-syntax,
+*/
 
 import '@testing-library/jest-dom';
 import { AxiosError, MOCK_FILE } from '__mocks__/axios';
@@ -6,22 +12,35 @@ import { ErrorMessage, Label } from 'src/constants';
 import { render, screen } from '@testing-library/react';
 import FileCreationForm from 'components/FileCreationForm';
 import { INVALID_FILE_NAME_MESSAGE } from 'modules/utils';
+import userEvent from '@testing-library/user-event';
 
 import {
   fillOutAndSubmitFileCreationForm,
   queueNetworkError,
 } from './utils';
 
+const TABLE_PLACEHOLDER_1 = '{table-placeholder-1}';
+const TABLE_PLACEHOLDER_2 = '{table-placeholder-2}';
+
 const PROPS = {
   templateFile: {
     metadata: {},
-    placeholders: ['{field}'],
-    tables: [{
-      rows: [{
-        metadata: {},
-        placeholders: [],
-      }],
-    }],
+    placeholders: ['{field1}'],
+    tables: [
+      {
+        rows: [
+          {
+            metadata: {},
+            placeholders: [TABLE_PLACEHOLDER_1],
+          },
+          {
+            metadata: {},
+            placeholders: [TABLE_PLACEHOLDER_2],
+          },
+        ],
+      },
+      null,
+    ],
   },
   getAuthStatus: jest.fn(async () => true),
   isAuthenticated: true,
@@ -31,7 +50,17 @@ const PROPS = {
 const SAMPLE_INPUT = 'sample input';
 const SAMPLE_ERROR = 'sample error';
 const SAMPLE_CAUSE = 'sample cause';
-const FIELD_LABELS = [...PROPS.templateFile.placeholders, Label.FileName, Label.FolderName];
+const TABLE_LABELS = PROPS.templateFile.tables.flatMap(
+  (table) => table?.rows?.flatMap(
+    (row) => row?.placeholders,
+  ) || [],
+);
+const FIELD_LABELS = [
+  ...PROPS.templateFile.placeholders,
+  ...TABLE_LABELS,
+  Label.FileName,
+  Label.FolderName,
+];
 
 const labelToLabeledInput = (label: string) => ({ label, text: SAMPLE_INPUT });
 const labeledInputs = FIELD_LABELS.map(labelToLabeledInput);
@@ -47,7 +76,7 @@ describe('FileCreationForm', () => {
 
     await fillOutAndSubmitFileCreationForm(labeledInputs);
 
-    expect(screen.getByText(JSON.stringify(MOCK_FILE))).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: MOCK_FILE.metadata.webViewLink })).toBeEnabled();
   });
 
   it('should disallow creating a file when not authenticated', async () => {
@@ -112,5 +141,55 @@ describe('FileCreationForm', () => {
     await fillOutAndSubmitFileCreationForm(labeledInputs);
 
     expect(screen.getByText(SAMPLE_ERROR)).toBeInTheDocument();
+  });
+});
+
+describe('TableReplacementsFormFragment', () => {
+  it('should display a field for each text replacement', async () => {
+    render(<FileCreationForm {...PROPS} />);
+
+    for (const label of TABLE_LABELS) {
+      expect(await screen.findByLabelText(label)).toBeInTheDocument();
+    }
+  });
+
+  it('should allow a table row to be copied', async () => {
+    render(<FileCreationForm {...PROPS} />);
+
+    await userEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
+
+    expect(await screen.findAllByLabelText(TABLE_PLACEHOLDER_1)).toHaveLength(2);
+  });
+
+  it('should allow a table row to be deleted', async () => {
+    render(<FileCreationForm {...PROPS} />);
+
+    await userEvent.click(screen.getAllByRole('button', { name: '-' })[0]);
+
+    expect(screen.queryByLabelText(TABLE_PLACEHOLDER_1)).not.toBeInTheDocument();
+  });
+
+  it('should allow a table row to be moved upward', async () => {
+    render(<FileCreationForm {...PROPS} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '↑' }));
+
+    expect(
+      screen
+        .getByLabelText(TABLE_PLACEHOLDER_2)
+        .compareDocumentPosition(screen.getByLabelText(TABLE_PLACEHOLDER_1)),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('should allow a table row to be moved downward', async () => {
+    render(<FileCreationForm {...PROPS} />);
+
+    await userEvent.click(screen.getByRole('button', { name: '↓' }));
+
+    expect(
+      screen
+        .getByLabelText(TABLE_PLACEHOLDER_2)
+        .compareDocumentPosition(screen.getByLabelText(TABLE_PLACEHOLDER_1)),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 });

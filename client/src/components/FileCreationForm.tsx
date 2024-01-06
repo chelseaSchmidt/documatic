@@ -107,7 +107,7 @@ const FileCreationForm = (
             ...toInitialValues(textReplacementFieldNames),
             ...toInitialValues(METADATA_FIELD_NAMES),
             tableReplacements: tables.map((table) => (table ? {
-              rows: table.rows?.map((row) => ({
+              rows: table.rows.map((row) => ({
                 metadata: row.metadata,
                 textReplacements: toInitialValues(row.placeholders),
               })),

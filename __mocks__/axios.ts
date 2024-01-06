@@ -13,7 +13,7 @@ export class AxiosError {
 }
 
 export const MOCK_FILE = {
-  metadata: { id: '123' },
+  metadata: { id: '123', webViewLink: 'link' },
   placeholders: ['{abc}'],
   tables: [],
 };
