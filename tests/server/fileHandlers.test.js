@@ -26,6 +26,7 @@ const {
 } = require('../../server/docUtils');
 const {
   throwError,
+  throwNetworkError,
   res,
   send,
   FILE_METADATA,
@@ -129,6 +130,14 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(207);
   });
 
+  it('should handle custom network error if file can\'t be retrieved after creation', async () => {
+    getFileMetadataById
+      .mockImplementationOnce(() => FILE_METADATA)
+      .mockImplementationOnce(throwNetworkError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(207);
+  });
+
   it('should partially fail with status code 207 if file created but tables could not be updated', async () => {
     replaceDocumentTables.mockImplementationOnce(throwError);
     await handleCreateFile(constructPostRequest(), res);
@@ -137,6 +146,12 @@ describe('POST file route handler', () => {
 
   it('should partially fail with status code 207 if file created but document text could not be updated', async () => {
     replaceDocumentTextValues.mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(207);
+  });
+
+  it('should handle custom network error if file created but content could not be updated', async () => {
+    replaceDocumentTextValues.mockImplementationOnce(throwNetworkError);
     await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(207);
   });

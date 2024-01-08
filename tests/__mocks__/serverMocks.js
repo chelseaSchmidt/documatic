@@ -48,6 +48,13 @@ const FOLDER_METADATA = { id: FOLDER_ID, mimeType: FOLDER_MIME_TYPE };
 
 const send = jest.fn();
 
+class NetworkError extends Error {
+  constructor(code, message, cause) {
+    super(message, { cause });
+    this.statusCode = code;
+  }
+}
+
 module.exports = {
   DOC,
   DOC_NAME,
@@ -65,6 +72,7 @@ module.exports = {
   send,
   res: { status: jest.fn(() => ({ send })) },
   throwError: jest.fn(() => { throw new Error(); }),
+  throwNetworkError: jest.fn(() => { throw new NetworkError(418, '', new Error()); }),
 
   google: {
     DOC_MIME_TYPE,
@@ -115,12 +123,7 @@ module.exports = {
     addPlaceholdersToTable: jest.fn(() => ({})),
     injectAuthValidation: jest.fn(),
     injectCommonErrorHandling: jest.fn(),
-    NetworkError: class NetworkError extends Error {
-      constructor(code, message, cause) {
-        super(message, { cause });
-        this.statusCode = code;
-      }
-    },
+    NetworkError,
   },
 
   docUtils: {
