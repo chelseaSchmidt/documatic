@@ -44,6 +44,7 @@ module.exports = {
         || (
           tableReplacements.every(isNullableObject)
           && nonNullTables.map(toRows).every(Array.isArray)
+          && nonNullTables.map(toRows).every((rows) => rows.length)
           && flattenedRows.every(isRowCorrectShape)
           && flattenedRows.map(toTextReplacements).every(areTextReplacementsValid)
           // TODO: schema validation on row.metadata
