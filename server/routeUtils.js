@@ -15,8 +15,8 @@ const isString = (value) => typeof value === 'string';
 const isObject = (value) => typeof value === 'object' && !Array.isArray(value);
 const isNullableObject = (value) => isObject(value) || value === null || value === undefined;
 const isRowCorrectShape = (object) => ROW_PROPERTIES.every((property) => property in object);
-const toRows = ({ rows }) => rows;
-const toTextReplacements = ({ textReplacements }) => textReplacements;
+const toRows = (table) => table?.rows;
+const toTextReplacements = (row) => row?.textReplacements;
 
 const areTextReplacementsValid = (textReplacements) => (
   isObject(textReplacements)
