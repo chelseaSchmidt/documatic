@@ -2,6 +2,7 @@
 
 const DOC_MIME_TYPE = 'doc-mime-type';
 const DOC_FILE_ID = 'doc-file-id';
+const DOC_NAME = 'doc-name';
 const FOLDER_MIME_TYPE = 'folder-mime-type';
 const FOLDER_ID = 'folder-id';
 const FOLDER_NAME = 'folder-name';
@@ -17,6 +18,15 @@ const PARAGRAPH_WITH_CONTENT = {
   },
 };
 const DETECTED_PLACEHOLDERS = [SAMPLE_PLACEHOLDER]; // expected placeholder end result
+const TABLES = [
+  { table: {} },
+  { table: { tableRows: [] } },
+  { table: { tableRows: [{}] } },
+  { table: { tableRows: [{ tableCells: [] }] } },
+  { table: { tableRows: [{ tableCells: [{}] }] } },
+  { table: { tableRows: [{ tableCells: [{ content: [] }] }] } },
+  { table: { tableRows: [{ tableCells: [{ content: [PARAGRAPH_WITH_CONTENT] }] }] } },
+];
 const DOC = {
   body: {
     content: [
@@ -29,21 +39,18 @@ const DOC = {
       { paragraph: { elements: [{}] } },
       { paragraph: { elements: [{ textRun: {} }] } },
       PARAGRAPH_WITH_CONTENT,
-      { table: {} },
-      { table: { tableRows: [] } },
-      { table: { tableRows: [{}] } },
-      { table: { tableRows: [{ tableCells: [] }] } },
-      { table: { tableRows: [{ tableCells: [{}] }] } },
-      { table: { tableRows: [{ tableCells: [{ content: [] }] }] } },
-      { table: { tableRows: [{ tableCells: [{ content: [PARAGRAPH_WITH_CONTENT] }] }] } },
+      ...TABLES,
     ],
   },
 };
 const FILE_METADATA = { id: DOC_FILE_ID, mimeType: DOC_MIME_TYPE };
 const FOLDER_METADATA = { id: FOLDER_ID, mimeType: FOLDER_MIME_TYPE };
 
+const send = jest.fn();
+
 module.exports = {
   DOC,
+  DOC_NAME,
   FOLDER_NAME,
   FOLDER_METADATA,
   SAMPLE_TEXT,
@@ -52,9 +59,11 @@ module.exports = {
   FILE: {
     metadata: FILE_METADATA,
     placeholders: DETECTED_PLACEHOLDERS,
-    tables: Array(7).fill(null),
+    tables: Array(TABLES.length).fill(null),
   },
 
+  send,
+  res: { status: jest.fn(() => ({ send })) },
   throwError: jest.fn(() => { throw new Error(); }),
 
   google: {
@@ -96,5 +105,21 @@ module.exports = {
     getDocumentById: jest.fn(() => DOC),
     copyFile: jest.fn(() => FILE_METADATA),
     updateDocument: jest.fn(() => DOC),
+  },
+
+  routeUtils: {
+    areTextReplacementsValid: jest.fn(() => true),
+    areTableReplacementsValid: jest.fn(() => true),
+    getPlaceholdersFromTextValues: jest.fn(() => DETECTED_PLACEHOLDERS),
+    toNullIfNoPlaceholders: jest.fn(() => null),
+    addPlaceholdersToTable: jest.fn(() => ({})),
+    injectAuthValidation: jest.fn(),
+    injectCommonErrorHandling: jest.fn(),
+    NetworkError: class NetworkError extends Error {
+      constructor(code, message, cause) {
+        super(message, { cause });
+        this.statusCode = code;
+      }
+    },
   },
 };

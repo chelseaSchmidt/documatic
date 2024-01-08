@@ -16,11 +16,6 @@ jest.mock('express', () => {
 });
 
 describe('server', () => {
-  beforeAll(() => {
-    process.env.GOOGLE_CLIENT_ID = 'google-client-id';
-    process.env.GOOGLE_CLIENT_SECRET = 'google-client-secret';
-  });
-
   beforeEach(() => {
     jest.resetModules();
     process.env.MODE = undefined;

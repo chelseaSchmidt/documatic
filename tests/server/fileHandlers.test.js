@@ -1,4 +1,3 @@
-/* eslint-disable global-require */
 /** @jest-environment node */
 
 const serverMocks = require('../__mocks__/serverMocks');
@@ -6,35 +5,35 @@ const serverMocks = require('../__mocks__/serverMocks');
 jest.mock('path');
 jest.mock('../../server/google', () => serverMocks.google);
 jest.mock('../../server/googleUtils', () => serverMocks.googleUtils);
+jest.mock('../../server/routeUtils', () => serverMocks.routeUtils);
 
 const {
   handleGetFileByName,
   handleCreateFile,
 } = require('../../server/fileHandlers');
 const {
-  isAuthenticated,
-} = require('../../server/google');
-const {
-  getDocumentById,
   getFileMetadataById,
   getFileMetadataByName,
   updateDocument,
 } = require('../../server/googleUtils');
 const {
+  areTextReplacementsValid,
+  areTableReplacementsValid,
+} = require('../../server/routeUtils');
+const {
   throwError,
+  res,
+  send,
   FILE_METADATA,
   FILE,
   FOLDER_NAME,
   FOLDER_METADATA,
+  DOC_NAME,
   SAMPLE_TEXT,
   SAMPLE_PLACEHOLDER,
 } = require('../__mocks__/serverMocks');
 
-const DOC_FILE_NAME = 'doc-file-name';
-const REQ = { params: { name: DOC_FILE_NAME } };
-
-const send = jest.fn();
-const res = { status: jest.fn(() => ({ send })) };
+const REQ = { params: { name: DOC_NAME } };
 
 const constructPostRequest = ({
   hasTemplateId = true,
@@ -46,7 +45,7 @@ const constructPostRequest = ({
     body: {
       templateId: hasTemplateId ? FILE_METADATA.id : undefined,
       metadataUpdates: {
-        fileName: hasFileName ? DOC_FILE_NAME : undefined,
+        fileName: hasFileName ? DOC_NAME : undefined,
         folderName: hasFolderName ? FOLDER_NAME : undefined,
       },
       textReplacements: hasTextReplacements
@@ -58,29 +57,9 @@ const constructPostRequest = ({
 };
 
 describe('GET file route handler', () => {
-  it('should return the requested file with de-duped placeholders', async () => {
+  it('should return the requested file', async () => {
     await handleGetFileByName(REQ, res);
     expect(send).toHaveBeenCalledWith(FILE);
-  });
-
-  it('should return the requested file when no placeholders are detected', async () => {
-    const EMPTY_DOC = { body: { content: [] } };
-    const FILE_NO_PLACEHOLDERS = {
-      metadata: FILE_METADATA,
-      placeholders: [],
-      tables: [],
-    };
-    getDocumentById.mockImplementationOnce(() => EMPTY_DOC);
-
-    await handleGetFileByName(REQ, res);
-
-    expect(send).toHaveBeenCalledWith(FILE_NO_PLACEHOLDERS);
-  });
-
-  it('should fail with status code 401 if user is not authenticated', async () => {
-    isAuthenticated.mockImplementationOnce(() => false);
-    await handleGetFileByName(REQ, res);
-    expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('should fail with status code 400 if searched file is not a google doc', async () => {
@@ -114,17 +93,15 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if requested text replacements aren\'t strings', async () => {
-    const req = constructPostRequest();
-    req.body.textReplacements = { number: 123 };
-    await handleCreateFile(req, res);
+  it('should fail with status code 400 if requested text replacements are invalid', async () => {
+    areTextReplacementsValid.mockImplementationOnce(() => false);
+    await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it('should fail with status code 400 if requested text replacements are malformed', async () => {
-    const req = constructPostRequest();
-    req.body.textReplacements = [];
-    await handleCreateFile(req, res);
+  it('should fail with status code 400 if requested table replacements are invalid', async () => {
+    areTableReplacementsValid.mockImplementationOnce(() => false);
+    await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
@@ -152,12 +129,5 @@ describe('POST file route handler', () => {
     updateDocument.mockImplementationOnce(throwError);
     await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(207);
-  });
-
-  it('should fail with status code 400 if table replacement data is malformed', async () => {
-    const req = constructPostRequest();
-    req.body.tableReplacements = [{}];
-    await handleCreateFile(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
   });
 });

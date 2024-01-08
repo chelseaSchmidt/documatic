@@ -12,7 +12,7 @@ const ROW_PROPERTIES = ['metadata', 'textReplacements'];
 
 const deDupe = (array) => Array.from(new Set(array));
 const isString = (value) => typeof value === 'string';
-const isObject = (value) => typeof value === 'object' && !Array.isArray(value);
+const isObject = (value) => value !== undefined && value !== null && typeof value === 'object' && !Array.isArray(value);
 const isNullableObject = (value) => isObject(value) || value === null || value === undefined;
 const isRowCorrectShape = (object) => ROW_PROPERTIES.every((property) => property in object);
 const toRows = (table) => table?.rows;
@@ -25,7 +25,7 @@ const areTextReplacementsValid = (textReplacements) => (
 );
 
 const getPlaceholdersFromTextValues = (textValues = []) => (
-  deDupe(textValues.join(' ').match(PLACEHOLDER_PATTERN) || [])
+  deDupe(textValues.join('\n').match(PLACEHOLDER_PATTERN) || [])
 );
 
 module.exports = {
