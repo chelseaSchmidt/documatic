@@ -18,7 +18,7 @@ jest.mock('express', () => {
 describe('server', () => {
   beforeEach(() => {
     jest.resetModules();
-    process.env.MODE = undefined;
+    process.env.MODE = '';
   });
 
   it('should run in dev mode', () => {
