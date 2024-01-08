@@ -122,4 +122,11 @@ module.exports = {
       }
     },
   },
+
+  docUtils: {
+    getTables: jest.fn(() => Array(TABLES.length).fill(null)),
+    getNonTableTextValues: jest.fn(() => []),
+    replaceDocumentTextValues: jest.fn(() => {}),
+    replaceDocumentTables: jest.fn(() => {}),
+  },
 };

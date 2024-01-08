@@ -6,6 +6,7 @@ jest.mock('path');
 jest.mock('../../server/google', () => serverMocks.google);
 jest.mock('../../server/googleUtils', () => serverMocks.googleUtils);
 jest.mock('../../server/routeUtils', () => serverMocks.routeUtils);
+jest.mock('../../server/docUtils', () => serverMocks.docUtils);
 
 const {
   handleGetFileByName,
@@ -14,12 +15,15 @@ const {
 const {
   getFileMetadataById,
   getFileMetadataByName,
-  updateDocument,
 } = require('../../server/googleUtils');
 const {
   areTextReplacementsValid,
   areTableReplacementsValid,
 } = require('../../server/routeUtils');
+const {
+  replaceDocumentTables,
+  replaceDocumentTextValues,
+} = require('../../server/docUtils');
 const {
   throwError,
   res,
@@ -125,8 +129,14 @@ describe('POST file route handler', () => {
     expect(res.status).toHaveBeenCalledWith(207);
   });
 
-  it('should partially fail with status code 207 if file created but content not updated', async () => {
-    updateDocument.mockImplementationOnce(throwError);
+  it('should partially fail with status code 207 if file created but tables could not be updated', async () => {
+    replaceDocumentTables.mockImplementationOnce(throwError);
+    await handleCreateFile(constructPostRequest(), res);
+    expect(res.status).toHaveBeenCalledWith(207);
+  });
+
+  it('should partially fail with status code 207 if file created but document text could not be updated', async () => {
+    replaceDocumentTextValues.mockImplementationOnce(throwError);
     await handleCreateFile(constructPostRequest(), res);
     expect(res.status).toHaveBeenCalledWith(207);
   });
